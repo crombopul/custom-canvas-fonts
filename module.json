@@ -2,7 +2,7 @@
   "id": "custom-canvas-font",
   "title": "Custom Canvas Font",
   "description": "<p>Lets you upload and pick a custom font for the canvas.</p>",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "compatibility": {
     "minimum": 11,
     "verified": 13
@@ -17,6 +17,6 @@
   ],
   "url": "https://github.com/TlMcook/custom-canvas-fonts.git",
   "manifest": "https://raw.githubusercontent.com/TlMcook/custom-canvas-fonts/main/module.json",
-  "download": "https://github.com/TlMcook/custom-canvas-fonts/releases/download/v1.0.1/custom-canvas-fonts.zip",
+  "download": "https://github.com/TlMcook/custom-canvas-fonts/releases/download/v1.0.2/custom-canvas-fonts.zip",
   "flags": {}
 }

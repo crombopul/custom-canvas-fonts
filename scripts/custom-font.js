@@ -95,32 +95,40 @@ Hooks.on("renderSettingsConfig", async (app, html) => {
         strokeThickness: game.settings.get(ns, "strokeThickness")
     };
 
-    // Load Pickr
+    // Load Pickr CSS & JS
     await loadCSS("https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/classic.min.css");
     await loadJS("https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js");
 
-    // -------------------- FONT DROPDOWN --------------------
-    const availableFonts = Array.from(document.fonts)
-        .map(f => f.family)
-        .filter((v, i, a) => !!v && a.indexOf(v) === i);
-    if (!availableFonts.includes(defaultFontFamily)) availableFonts.push(defaultFontFamily);
+    // Populate Font Choice dropdown dynamically
+    setTimeout(() => {
+        const availableFonts = Array.from(document.fonts)
+            .map(f => f.family)
+            .filter((v, i, a) => !!v && a.indexOf(v) === i);
 
-    const $select = $html.find(`select[name="${ns}.fontChoice"]`);
-    $select.empty();
-    for (const font of availableFonts) {
-        const selected = font === game.settings.get(ns, "fontChoice") ? "selected" : "";
-        $select.append(`<option value="${font}" ${selected} style="font-family:'${font}';">${font}</option>`);
-    }
+        if (!availableFonts.includes(defaultFontFamily)) availableFonts.push(defaultFontFamily);
+
+        const fontChoices = availableFonts.reduce((obj, f) => {
+            obj[f] = f;
+            return obj;
+        }, {});
+
+        const $select = $html.find(`select[name="${ns}.fontChoice"]`);
+        $select.empty();
+        for (const [key, label] of Object.entries(fontChoices)) {
+            const selected = key === game.settings.get(ns, "fontChoice") ? "selected" : "";
+            $select.append(`<option value="${key}" ${selected}>${label}</option>`);
+        }
+    }, 100);
 
     // -------------------- LIVE PREVIEW --------------------
     let $preview = $html.find(`#${ns}-font-preview`);
     if ($preview.length === 0) {
         $preview = $(`<div id="${ns}-font-preview" style="margin-top:10px; padding:10px; border:1px solid #ccc;">Sphinx of black quartz, judge my vow</div>`);
-        $select.after($preview);
+        $html.find(`select[name="${ns}.fontChoice"]`).after($preview);
     }
 
     const updatePreview = async () => {
-        const selectedFont = $select.val();
+        const selectedFont = $html.find(`select[name="${ns}.fontChoice"]`).val();
         const fontFile = $html.find(`input[name="${ns}.fontFile"]`).val();
         const fontSize = parseInt($html.find(`input[name="${ns}.fontSize"]`).val()) || 28;
         const strokeThickness = parseInt($html.find(`input[name="${ns}.strokeThickness"]`).val()) || 2;
@@ -151,12 +159,23 @@ Hooks.on("renderSettingsConfig", async (app, html) => {
                 0 ${strokeThickness}px ${fontStroke}
             `
         });
+
+        // -------------------- APPLY TO CANVAS --------------------
+        CONFIG.canvasTextStyle = mergeObject(CONFIG.canvasTextStyle, {
+            fontFamily,
+            fontSize,
+            fill: fontFill,
+            stroke: fontStroke,
+            strokeThickness
+        });
+
+        refreshAllTokenNameplates();
     };
 
-    $select.on("change", updatePreview);
+    $html.find(`select[name="${ns}.fontChoice"]`).on("change", updatePreview);
+    $html.find(`input[name="${ns}.fontFile"]`).on("change", updatePreview);
     $html.find(`input[name="${ns}.fontSize"]`).on("input", updatePreview);
     $html.find(`input[name="${ns}.strokeThickness"]`).on("input", updatePreview);
-    $html.find(`input[name="${ns}.fontFile"]`).on("change", updatePreview);
 
     // -------------------- PICKR COLOR WHEELS --------------------
     const initPickr = ($input) => {
@@ -167,7 +186,12 @@ Hooks.on("renderSettingsConfig", async (app, html) => {
             el: container[0],
             theme: 'classic',
             default: $input.val(),
-            components: { preview: true, opacity: true, hue: true, interaction: { input: true, save: true } }
+            components: {
+                preview: true,
+                opacity: true,
+                hue: true,
+                interaction: { input: true, save: true }
+            }
         });
         pickr.on('change', color => {
             const hex = color.toHEXA().toString();
@@ -180,30 +204,132 @@ Hooks.on("renderSettingsConfig", async (app, html) => {
     initPickr($html.find(`input[name="${ns}.fontFill"]`));
     initPickr($html.find(`input[name="${ns}.fontStroke"]`));
 
-    // -------------------- CONFIGURE ADDITIONAL FONTS BUTTON --------------------
-    //const $fileInputGroup = $html.find(`input[name="${ns}.fontFile"]`).closest(".form-group");
-    //if ($fileInputGroup.length && $fileInputGroup.find(`button[data-key="core.fonts"]`).length === 0) {
-    //    const $button = $(`
-    //        <button type="button" data-action="openSubmenu" data-key="core.fonts">
-    //            <i class="fa-solid fa-font"></i>
-    //            <span>Configure Additional Fonts</span>
-    //        </button>
-    //    `);
-    //    $fileInputGroup.append($button);
-    //    $button.on("click", (event) => {
-    //        const action = event.currentTarget.dataset.action;
-    //        const key = event.currentTarget.dataset.key;
-    //        if (action === "openSubmenu" && key) {
-    //            ui.settings._onClickSubmenu(event);
-    //        }
-    //    });
-    //}
-
     // -------------------- INITIAL PREVIEW --------------------
     updatePreview();
+
+    // -------------------- CONFIGURE ADDITIONAL FONTS BUTTON --------------------
+    /*
+    const $fileInputGroup = $html.find(`input[name="${ns}.fontFile"]`).closest(".form-group");
+    if ($fileInputGroup.length && $fileInputGroup.find(`button[data-key="core.fonts"]`).length === 0) {
+        const $button = $(`
+            <button type="button" data-action="openSubmenu" data-key="core.fonts">
+                <i class="fa-solid fa-font"></i>
+                <span>Configure Additional Fonts</span>
+            </button>
+        `);
+        $fileInputGroup.append($button);
+        $button.on("click", (event) => {
+            const action = event.currentTarget.dataset.action;
+            const key = event.currentTarget.dataset.key;
+            if (action === "openSubmenu" && key) {
+                ui.settings._onClickSubmenu(event);
+            }
+        });
+    }
+    */
 });
 
-// -------------------- HELPER: LOAD CSS/JS --------------------
+// -------------------- APPLY ON READY --------------------
+Hooks.once("ready", async () => {
+    const fontChoice = game.settings.get(ns, "fontChoice");
+    const fontFile = game.settings.get(ns, "fontFile");
+    const fontFill = game.settings.get(ns, "fontFill");
+    const fontSize = game.settings.get(ns, "fontSize");
+    const fontStroke = game.settings.get(ns, "fontStroke");
+    const strokeThickness = game.settings.get(ns, "strokeThickness");
+
+    const fontFamily = fontFile ? defaultFontFamily : (fontChoice || defaultFontFamily);
+
+    await loadAndEnsureFont(fontFamily, fontFile);
+
+    CONFIG.canvasTextStyle = mergeObject(CONFIG.canvasTextStyle, {
+        fontFamily,
+        fontSize,
+        fill: fontFill,
+        stroke: fontStroke,
+        strokeThickness
+    });
+
+    refreshAllTokenNameplates();
+    console.log(`Custom Canvas Font applied: ${fontFamily}`, CONFIG.canvasTextStyle);
+});
+
+// -------------------- AFTER SETTINGS SAVE --------------------
+Hooks.on("closeSettingsConfig", () => {
+    if (!game.user.isGM) return;
+
+    const currentSettings = {
+        fontChoice: game.settings.get(ns, "fontChoice"),
+        fontFile: game.settings.get(ns, "fontFile"),
+        fontFill: game.settings.get(ns, "fontFill"),
+        fontSize: game.settings.get(ns, "fontSize"),
+        fontStroke: game.settings.get(ns, "fontStroke"),
+        strokeThickness: game.settings.get(ns, "strokeThickness")
+    };
+
+    const changed = Object.keys(previousSettings).some(k => previousSettings[k] !== currentSettings[k]);
+    if (!changed) return;
+
+    new Dialog({
+        title: "Restart Required",
+        content: `<p>Custom Font changes will not take effect until you refresh Foundry. All players will reload automatically.</p>`,
+        buttons: {
+            restart: {
+                icon: '<i class="fas fa-sync"></i>',
+                label: "Restart Now",
+                callback: () => {
+                    game.socket.emit(`module.${ns}`, { action: "refresh" });
+                    window.location.reload();
+                }
+            },
+            later: {
+                icon: '<i class="fas fa-clock"></i>',
+                label: "Later",
+                callback: () => game.socket.emit(`module.${ns}`, { action: "refresh" })
+            }
+        },
+        default: "later"
+    }).render(true);
+});
+
+// -------------------- HELPERS --------------------
+async function loadAndEnsureFont(fontFamily, filePath) {
+    try {
+        if (filePath) {
+            const ff = new FontFace(fontFamily, `url(${filePath})`);
+            await ff.load();
+            document.fonts.add(ff);
+        }
+        await document.fonts.load(`24px "${fontFamily}"`);
+        await document.fonts.ready;
+    } catch (err) {
+        console.error("Font loading failed:", err);
+    }
+}
+
+function refreshAllTokenNameplates() {
+    if (!canvas?.tokens) return;
+
+    for (const t of canvas.tokens.placeables) {
+        try {
+            t.refresh?.();
+            const np = t.nameplate || t.text || t._text;
+            if (np?.style) {
+                np.style.fontFamily = CONFIG.canvasTextStyle.fontFamily;
+                np.dirty = true;
+                np.updateText?.();
+            }
+        } catch (e) {
+            console.warn("Could not refresh token", t, e);
+        }
+    }
+
+    const updateHook = () => queueMicrotask(() => canvas?.tokens?.placeables?.forEach(t => t.refresh?.()));
+    Hooks.on("createToken", updateHook);
+    Hooks.on("updateToken", updateHook);
+}
+
+// -------------------- CSS/JS LOAD HELPERS --------------------
 function loadCSS(url) {
     return new Promise(resolve => {
         const link = document.createElement("link");
