@@ -1,0 +1,20 @@
+{
+  "id": "custom-canvas-font",
+  "title": "Custom Canvas Font",
+  "description": "<p>Lets you upload and pick a custom font for the canvas.</p>",
+  "version": "1.0.0",
+  "compatibility": {
+    "minimum": 11,
+    "verified": 13
+  },
+
+  "scripts": [ "scripts/custom-font.js" ],
+  "authors": [
+    {
+      "name": "Crombopul",
+      "discord": "crombopul"
+    }
+  ],
+  "url": "https://github.com/TlMcook/custom-canvas-fonts.git",
+  "flags": {}
+}
