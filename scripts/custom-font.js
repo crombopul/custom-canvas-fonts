@@ -161,7 +161,7 @@ Hooks.on("renderSettingsConfig", async (app, html) => {
         });
 
         // -------------------- APPLY TO CANVAS --------------------
-        CONFIG.canvasTextStyle = mergeObject(CONFIG.canvasTextStyle, {
+        CONFIG.canvasTextStyle = foundry.utils.mergeObject(CONFIG.canvasTextStyle, {
             fontFamily,
             fontSize,
             fill: fontFill,
@@ -242,7 +242,7 @@ Hooks.once("ready", async () => {
 
     await loadAndEnsureFont(fontFamily, fontFile);
 
-    CONFIG.canvasTextStyle = mergeObject(CONFIG.canvasTextStyle, {
+    CONFIG.canvasTextStyle = foundry.utils.mergeObject(CONFIG.canvasTextStyle, {
         fontFamily,
         fontSize,
         fill: fontFill,
