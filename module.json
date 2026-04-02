@@ -5,7 +5,7 @@
   "version": "1.0.3",
   "compatibility": {
     "minimum": 11,
-    "verified": 13
+    "verified": 14
   },
 
   "scripts": [ "scripts/custom-font.js" ],
